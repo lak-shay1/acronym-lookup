@@ -4,48 +4,45 @@
   padding: 0;
 }
 
-/* Apply a global font and background color */
+/* Global body styling */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
                Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  background-color: #f6f7f9; /* Subtle off-white/gray background */
-  color: #333;              /* Dark gray text for good readability */
+  background-color: #f6f7f9; /* Light gray background */
+  color: #333;              /* Dark text for good readability */
+  line-height: 1.5;         /* Comfortable line spacing */
 }
 
-/* Container for the main content */
+/* Main container */
 .App {
-  max-width: 700px; /* Slightly wider than before for more content space */
-  margin: 3rem auto;
-  padding: 2rem;
-  background-color: #fff; /* White card-like container */
-  border-radius: 8px;     /* Slight rounding of corners */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for a professional card look */
+  max-width: 700px;               /* Slightly wider for more content space */
+  margin: 3rem auto;              /* Center horizontally and add top/bottom margin */
+  padding: 2.5rem;                /* Generous padding for a 'card' feel */
+  background-color: #fff;         /* White background for contrast */
+  border-radius: 8px;             /* Rounded corners for a modern look */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
+  text-align: center;             /* Center text by default */
 }
 
 /* Headings */
 h1, h2, h3 {
   margin-bottom: 1rem;
-  font-weight: 600; /* Slightly bold headings */
-  color: #222;      /* Slightly darker heading color */
+  font-weight: 600;
+  color: #222;
 }
 
 h1 {
-  font-size: 1.8rem;
+  font-size: 2rem; /* Larger for the main title */
 }
 
-h3 {
-  font-size: 1.2rem;
-}
-
-/* Paragraphs or messages like "No acronyms found." */
+/* Paragraphs for messages like "No acronyms found." */
 p {
-  margin: 0.5rem 0;
-  line-height: 1.4;
+  margin: 0.75rem 0;
 }
 
 /* SearchBar container */
 .SearchBar {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 /* Search input */
@@ -60,17 +57,19 @@ p {
 
 .SearchBar input[type="text"]:focus {
   outline: none;
-  border-color: #007bff; /* A subtle blue highlight on focus */
+  border-color: #007bff; /* Blue border on focus */
 }
 
-/* Acronym list */
+/* Acronym list container */
 .AcronymList {
   margin-bottom: 2rem;
+  text-align: left; /* Align items left for better readability */
 }
 
+/* The list itself */
 .AcronymList ul {
-  list-style: none;
-  padding-left: 0;
+  list-style-type: none;
+  padding: 0;
 }
 
 /* Each acronym item */
@@ -83,20 +82,27 @@ p {
   transition: background-color 0.2s ease;
 }
 
-/* Hover effect for each item */
+/* Hover effect for each acronym item */
 .AcronymList li:hover {
   background-color: #f0f0f0;
 }
 
 /* Bold acronym text */
 .AcronymList strong {
-  color: #007bff;
-  margin-right: 0.5rem;
+  color: #007bff; /* Accent color */
 }
 
-/* Add Acronym Form container */
+/* Horizontal divider for sections (optional usage in App.js) */
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 2rem 0;
+}
+
+/* AddAcronymForm container */
 .AddAcronymForm {
   margin-top: 2rem;
+  text-align: left; /* Left-align form elements */
 }
 
 /* Form fields */
@@ -126,17 +132,18 @@ p {
   font-size: 1rem;
   border: none;
   border-radius: 4px;
-  background-color: #007bff; /* Primary button color */
+  background-color: #007bff; /* Primary blue */
   color: #fff;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  align-self: flex-start; /* Align button to the left if desired */
 }
 
 /* Hover/active states for the button */
 .AddAcronymForm button:hover {
-  background-color: #0056b3;
+  background-color: #0069d9;
 }
 
 .AddAcronymForm button:active {
-  background-color: #004999;
+  background-color: #005cbf;
 }
