@@ -1,71 +1,66 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { db } from './Firebase';
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc
-} from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 function App() {
-  const [acronyms, setAcronyms] = useState([]); // holds acronyms from Firestore
-  const [searchQuery, setSearchQuery] = useState(''); // holds the search input
+  const [acronyms, setAcronyms] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Function to fetch acronyms from Firestore
-  const fetchAcronyms = async () => {
-    try {
+  useEffect(() => {
+    async function fetchAcronyms() {
       const snapshot = await getDocs(collection(db, 'acronyms'));
       const loaded = [];
       snapshot.forEach(docSnap => {
-        loaded.push({
-          id: docSnap.id,
-          ...docSnap.data()
-        });
+        loaded.push({ id: docSnap.id, ...docSnap.data() });
       });
       setAcronyms(loaded);
-    } catch (err) {
-      console.error('Error fetching acronyms:', err);
     }
-  };
-
-  // Fetch on mount
-  useEffect(() => {
     fetchAcronyms();
   }, []);
 
   return (
-    <div className="App" style={{ maxWidth: '600px', margin: 'auto', padding: '1rem' }}>
+    <div className="App">
       <h1>Acronym Lookup Tool</h1>
-      
-      <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
 
-      <AcronymList acronyms={acronyms} searchQuery={searchQuery} />
+      <SearchBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+      />
 
-      <AddAcronymForm onAcronymAdded={fetchAcronyms} />
-    </div>
-  );
-}
+      <AcronymList
+        acronyms={acronyms}
+        searchQuery={searchQuery}
+      />
 
-// ----- SearchBar Component -----
-function SearchBar({ searchQuery, onSearchQueryChange }) {
-  return (
-    <div style={{ marginBottom: '1rem' }}>
-      <input
-        type="text"
-        placeholder="Search acronyms..."
-        value={searchQuery}
-        onChange={(e) => onSearchQueryChange(e.target.value)}
-        style={{ width: '100%', padding: '8px' }}
+      <AddAcronymForm
+        onAcronymAdded={async () => {
+          const snapshot = await getDocs(collection(db, 'acronyms'));
+          const updated = [];
+          snapshot.forEach(docSnap => {
+            updated.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          setAcronyms(updated);
+        }}
       />
     </div>
   );
 }
 
-// ----- AcronymList Component -----
+function SearchBar({ searchQuery, onSearchQueryChange }) {
+  return (
+    <div className="SearchBar">
+      <input
+        type="text"
+        placeholder="Search acronyms..."
+        value={searchQuery}
+        onChange={(e) => onSearchQueryChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 function AcronymList({ acronyms, searchQuery }) {
-  // Filter acronyms based on the search query
   const filtered = acronyms.filter(item => {
     const acrUpper = item.id.toUpperCase();
     const defLower = (item.definition || '').toLowerCase();
@@ -76,48 +71,42 @@ function AcronymList({ acronyms, searchQuery }) {
   });
 
   if (filtered.length === 0) {
-    return <p>No acronyms found.</p>;
+    return <p className="AcronymList">No acronyms found.</p>;
   }
 
   return (
-    <ul style={{ listStyleType: 'none', padding: 0 }}>
-      {filtered.map(item => (
-        <li key={item.id} style={{ margin: '0.5rem 0' }}>
-          <strong>{item.id}</strong> – {item.definition}
-        </li>
-      ))}
-    </ul>
+    <div className="AcronymList">
+      <ul>
+        {filtered.map(acr => (
+          <li key={acr.id}>
+            <strong>{acr.id}</strong>
+            {acr.definition ? ` – ${acr.definition}` : ''}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-// ----- AddAcronymForm Component -----
 function AddAcronymForm({ onAcronymAdded }) {
   const [acronym, setAcronym] = useState('');
   const [definition, setDefinition] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!acronym.trim() || !definition.trim()) {
       alert('Please fill in both fields.');
       return;
     }
-
     const uppercaseAcronym = acronym.trim().toUpperCase();
     const definitionText = definition.trim();
-
     try {
-      // Create or overwrite document in the "acronyms" collection with the acronym as the document ID
       await setDoc(doc(db, 'acronyms', uppercaseAcronym), {
         definition: definitionText
       });
       alert(`Acronym "${uppercaseAcronym}" added successfully!`);
-
-      // Clear the form fields
       setAcronym('');
       setDefinition('');
-
-      // Notify parent to re-fetch the updated acronym list
       onAcronymAdded();
     } catch (error) {
       console.error('Error adding acronym:', error);
@@ -126,9 +115,9 @@ function AddAcronymForm({ onAcronymAdded }) {
   };
 
   return (
-    <div style={{ marginTop: '2rem' }}>
+    <div className="AddAcronymForm">
       <h3>Add a New Acronym</h3>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Acronym (e.g., API)"
