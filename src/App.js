@@ -7,6 +7,7 @@ function App() {
   const [acronyms, setAcronyms] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Fetch acronyms from Firestore when the component mounts
   useEffect(() => {
     async function fetchAcronyms() {
       const snapshot = await getDocs(collection(db, 'acronyms'));
@@ -28,10 +29,13 @@ function App() {
         onSearchQueryChange={setSearchQuery}
       />
 
-      <AcronymList
-        acronyms={acronyms}
-        searchQuery={searchQuery}
-      />
+      {searchQuery.trim() !== '' ? (
+        <AcronymList acronyms={acronyms} searchQuery={searchQuery} />
+      ) : (
+        <p className="AcronymList">
+          Please enter a search query to view acronyms.
+        </p>
+      )}
 
       <AddAcronymForm
         onAcronymAdded={async () => {
@@ -71,7 +75,7 @@ function AcronymList({ acronyms, searchQuery }) {
   });
 
   if (filtered.length === 0) {
-    return <p className="AcronymList">No acronyms found.</p>;
+    return <p>No acronyms found.</p>;
   }
 
   return (
