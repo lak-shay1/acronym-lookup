@@ -67,11 +67,7 @@ function SearchBar({ searchQuery, onSearchQueryChange }) {
 function AcronymList({ acronyms, searchQuery }) {
   const filtered = acronyms.filter(item => {
     const acrUpper = item.id.toUpperCase();
-    const defLower = (item.definition || '').toLowerCase();
-    return (
-      acrUpper.includes(searchQuery.toUpperCase()) ||
-      defLower.includes(searchQuery.toLowerCase())
-    );
+    return acrUpper.startsWith(searchQuery.toUpperCase()); // Only match starting letters
   });
 
   if (filtered.length === 0) {
@@ -85,6 +81,7 @@ function AcronymList({ acronyms, searchQuery }) {
           <li key={acr.id}>
             <strong>{acr.id}</strong>
             {acr.definition ? ` – ${acr.definition}` : ''}
+            {acr.team ? ` (Team: ${acr.team})` : ''}
           </li>
         ))}
       </ul>
@@ -95,22 +92,27 @@ function AcronymList({ acronyms, searchQuery }) {
 function AddAcronymForm({ onAcronymAdded }) {
   const [acronym, setAcronym] = useState('');
   const [definition, setDefinition] = useState('');
+  const [team, setTeam] = useState(''); // New state for team name
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!acronym.trim() || !definition.trim()) {
-      alert('Please fill in both fields.');
+    if (!acronym.trim() || !definition.trim() || !team.trim()) {
+      alert('Please fill in all fields.');
       return;
     }
     const uppercaseAcronym = acronym.trim().toUpperCase();
     const definitionText = definition.trim();
+    const teamText = team.trim();
+
     try {
       await setDoc(doc(db, 'acronyms', uppercaseAcronym), {
-        definition: definitionText
+        definition: definitionText,
+        team: teamText, // Store team name in Firebase
       });
       alert(`Acronym "${uppercaseAcronym}" added successfully!`);
       setAcronym('');
       setDefinition('');
+      setTeam(''); // Reset team field
       onAcronymAdded();
     } catch (error) {
       console.error('Error adding acronym:', error);
@@ -133,6 +135,12 @@ function AddAcronymForm({ onAcronymAdded }) {
           placeholder="Definition (e.g., Application Programming Interface)"
           value={definition}
           onChange={(e) => setDefinition(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Team Name (e.g., DevOps)"
+          value={team}
+          onChange={(e) => setTeam(e.target.value)}
         />
         <button type="submit">Add Acronym</button>
       </form>
