@@ -1,61 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
-import { db } from './Firebase';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import { db } from "./Firebase";
+import Dashboard from "./Dashboard";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
+import { serverTimestamp } from "firebase/firestore"; // Import timestamp
 
 function App() {
   const [acronyms, setAcronyms] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch acronyms from Firestore when the component mounts
   useEffect(() => {
-    async function fetchAcronyms() {
-      const snapshot = await getDocs(collection(db, 'acronyms'));
-      const loaded = [];
-      snapshot.forEach(docSnap => {
-        loaded.push({ id: docSnap.id, ...docSnap.data() });
-      });
+    // Firestore real-time listener for acronyms
+    const unsubscribe = onSnapshot(collection(db, "acronyms"), (snapshot) => {
+      console.log("Acronyms updated:", snapshot.docs.map((doc) => doc.data())); // Debugging log
+      const loaded = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
       setAcronyms(loaded);
-    }
-    fetchAcronyms();
+    });
+
+    return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
 
   return (
-    <div className="App">
-      <h1>Acronym Lookup Tool</h1>
+    <div className="container py-5">
+      <h1 className="text-center text-primary mb-4">
+        Broadband & Media Jargon Buster
+      </h1>
 
-      <SearchBar
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-      />
+      <SearchBar searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
 
-      {searchQuery.trim() !== '' ? (
+      {searchQuery.trim() !== "" ? (
         <AcronymList acronyms={acronyms} searchQuery={searchQuery} />
       ) : (
-        <p className="AcronymList">
-          Please enter a search query to view acronyms.
+        <p className="text-center text-muted mt-3">
+          Start typing to search for acronyms...
         </p>
       )}
 
-      <AddAcronymForm
-        onAcronymAdded={async () => {
-          const snapshot = await getDocs(collection(db, 'acronyms'));
-          const updated = [];
-          snapshot.forEach(docSnap => {
-            updated.push({ id: docSnap.id, ...docSnap.data() });
-          });
-          setAcronyms(updated);
-        }}
-      />
+      <AddAcronymForm />
+
+      {/* Dashboard moved to the bottom */}
+      <div className="mt-5 text-center">
+        <Dashboard />
+      </div>
     </div>
   );
 }
 
 function SearchBar({ searchQuery, onSearchQueryChange }) {
   return (
-    <div className="SearchBar">
+    <div className="mb-4">
       <input
         type="text"
+        className="form-control"
         placeholder="Search acronyms..."
         value={searchQuery}
         onChange={(e) => onSearchQueryChange(e.target.value)}
@@ -65,87 +65,102 @@ function SearchBar({ searchQuery, onSearchQueryChange }) {
 }
 
 function AcronymList({ acronyms, searchQuery }) {
-  const filtered = acronyms.filter(item => {
-    const acrUpper = item.id.toUpperCase();
-    return acrUpper.startsWith(searchQuery.toUpperCase()); // Only match starting letters
-  });
+  const filtered = acronyms.filter((item) =>
+    item.id.toUpperCase().startsWith(searchQuery.toUpperCase())
+  );
 
   if (filtered.length === 0) {
-    return <p>No acronyms found.</p>;
+    return <p className="text-center text-danger">No acronyms found.</p>;
   }
 
   return (
-    <div className="AcronymList">
-      <ul>
-        {filtered.map(acr => (
-          <li key={acr.id}>
-            <strong>{acr.id}</strong>
-            {acr.definition ? ` – ${acr.definition}` : ''}
-            {acr.team ? ` (Team: ${acr.team})` : ''}
-          </li>
-        ))}
-      </ul>
+    <div className="row mt-3">
+      {filtered.map((acr) => (
+        <div key={acr.id} className="col-md-6">
+          <div className="card shadow-sm mb-3">
+            <div className="card-body">
+              <h5 className="card-title text-primary">{acr.id}</h5>
+              <p className="card-text">{acr.definition}</p>
+              {acr.team && <p className="text-muted">Team: {acr.team}</p>}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function AddAcronymForm({ onAcronymAdded }) {
-  const [acronym, setAcronym] = useState('');
-  const [definition, setDefinition] = useState('');
-  const [team, setTeam] = useState(''); // New state for team name
+function AddAcronymForm() {
+  const [acronym, setAcronym] = useState("");
+  const [definition, setDefinition] = useState("");
+  const [team, setTeam] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!acronym.trim() || !definition.trim() || !team.trim()) {
-      alert('Please fill in all fields.');
+      alert("Please fill in all fields.");
       return;
     }
+
     const uppercaseAcronym = acronym.trim().toUpperCase();
     const definitionText = definition.trim();
     const teamText = team.trim();
 
     try {
-      await setDoc(doc(db, 'acronyms', uppercaseAcronym), {
+      await setDoc(doc(db, "acronyms", uppercaseAcronym), {
         definition: definitionText,
-        team: teamText, // Store team name in Firebase
+        team: teamText,
+        createdAt: serverTimestamp(), // Add timestamp for sorting
       });
       alert(`Acronym "${uppercaseAcronym}" added successfully!`);
-      setAcronym('');
-      setDefinition('');
-      setTeam(''); // Reset team field
-      onAcronymAdded();
+      setAcronym("");
+      setDefinition("");
+      setTeam("");
     } catch (error) {
-      console.error('Error adding acronym:', error);
-      alert('Failed to add acronym. See console for details.');
+      console.error("Error adding acronym:", error);
+      alert("Failed to add acronym. See console for details.");
     }
   };
 
   return (
-    <div className="AddAcronymForm">
-      <h3>Add a New Acronym</h3>
+    <div className="card shadow-lg mt-5 p-4">
+      <h3 className="text-center text-secondary mb-3">Add a New Acronym</h3>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Acronym (e.g., API)"
-          value={acronym}
-          onChange={(e) => setAcronym(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Definition (e.g., Application Programming Interface)"
-          value={definition}
-          onChange={(e) => setDefinition(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Team Name (e.g., DevOps)"
-          value={team}
-          onChange={(e) => setTeam(e.target.value)}
-        />
-        <button type="submit">Add Acronym</button>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Acronym (e.g., API)"
+            value={acronym}
+            onChange={(e) => setAcronym(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Definition (e.g., Application Programming Interface)"
+            value={definition}
+            onChange={(e) => setDefinition(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Team Name (e.g., DevOps)"
+            value={team}
+            onChange={(e) => setTeam(e.target.value)}
+          />
+        </div>
+        <button type="submit" className="btn btn-primary w-100">
+          Add Acronym
+        </button>
       </form>
     </div>
   );
 }
 
 export default App;
+
+
